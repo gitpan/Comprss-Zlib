@@ -495,7 +495,7 @@ BOOT:
         sv_setpv(gzerror_sv, "") ;
         SvIOK_on(gzerror_sv) ;
     }
-    sv_NULL = (SV*)newSVpv("", 0);
+    sv_NULL = newSVpvn("", 0);
 
 
 #define Zip_zlib_version()	(char*)zlib_version

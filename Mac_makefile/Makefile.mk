@@ -1,7 +1,7 @@
 # This Makefile is for the Compress::Zlib extension to perl.
 #
 # It was generated automatically by MakeMaker version
-# 1.02 (Revision: ) from the contents of
+# 1.04 (Revision: ) from the contents of
 # Makefile.PL. Don't edit this file, edit Makefile.PL instead.
 #
 #	ANY CHANGES MADE HERE WILL BE LOST!
@@ -18,16 +18,16 @@
 NAME = Compress::Zlib
 DISTNAME = Compress-Zlib
 NAME_SYM = Compress_Zlib
-VERSION = 1.02
-VERSION_SYM = 1_02
-XS_VERSION = 1.02
+VERSION = 1.04
+VERSION_SYM = 1_04
+XS_VERSION = 1.04
 INST_LIB = ::::lib
 INST_ARCHLIB = ::::lib
 PERL_LIB = ::::lib
 PERL_SRC = ::::
 PERL = ::::miniperl
 FULLPERL = ::::perl
-SOURCE =  $(C_FILES)
+SOURCE =  Zlib.c $(C_FILES)
 
 MODULES = Zlib.pm
 
@@ -42,6 +42,7 @@ MODULES = Zlib.pm
 FULLEXT = Compress:Zlib
 BASEEXT = Zlib
 ROOTEXT = Compress:
+INC =  
 
 # Handy lists of source code files:
 XS_FILES= Zlib.xs

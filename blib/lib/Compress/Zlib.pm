@@ -1,7 +1,7 @@
-# File	  : Zlib.pm
+# File    : Zlib.pm
 # Author  : Paul Marquess
-# Created : 8th July 1996
-# Version : 1.02
+# Created : 27th May 1999
+# Version : 1.04
 #
 #     Copyright (c) 1995-1999 Paul Marquess. All rights reserved.
 #     This program is free software; you can redistribute it and/or
@@ -19,58 +19,58 @@ use IO::Handle ;
 
 use strict ;
 use vars qw($VERSION @ISA @EXPORT $AUTOLOAD 
-	    $deflateDefault $deflateParamsDefault $inflateDefault) ;
+        $deflateDefault $deflateParamsDefault $inflateDefault) ;
 
 @ISA = qw(Exporter DynaLoader);
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
 # Do not simply export all your public functions/methods/constants.
 @EXPORT = qw(
-	deflateInit inflateInit
+    deflateInit inflateInit
 
-	compress uncompress
+    compress uncompress
 
-	gzip gunzip
+    gzip gunzip
 
-	gzopen $gzerrno
+    gzopen $gzerrno
 
-	adler32 crc32
+    adler32 crc32
 
-	ZLIB_VERSION
+    ZLIB_VERSION
 
         MAX_MEM_LEVEL
-	MAX_WBITS
+    MAX_WBITS
 
-	Z_ASCII
-	Z_BEST_COMPRESSION
-	Z_BEST_SPEED
-	Z_BINARY
-	Z_BUF_ERROR
-	Z_DATA_ERROR
-	Z_DEFAULT_COMPRESSION
-	Z_DEFAULT_STRATEGY
+    Z_ASCII
+    Z_BEST_COMPRESSION
+    Z_BEST_SPEED
+    Z_BINARY
+    Z_BUF_ERROR
+    Z_DATA_ERROR
+    Z_DEFAULT_COMPRESSION
+    Z_DEFAULT_STRATEGY
         Z_DEFLATED
-	Z_ERRNO
-	Z_FILTERED
-	Z_FINISH
-	Z_FULL_FLUSH
-	Z_HUFFMAN_ONLY
-	Z_MEM_ERROR
-	Z_NEED_DICT
-	Z_NO_COMPRESSION
-	Z_NO_FLUSH
-	Z_NULL
-	Z_OK
-	Z_PARTIAL_FLUSH
-	Z_STREAM_END
-	Z_STREAM_ERROR
-	Z_SYNC_FLUSH
-	Z_UNKNOWN
-	Z_VERSION_ERROR
+    Z_ERRNO
+    Z_FILTERED
+    Z_FINISH
+    Z_FULL_FLUSH
+    Z_HUFFMAN_ONLY
+    Z_MEM_ERROR
+    Z_NEED_DICT
+    Z_NO_COMPRESSION
+    Z_NO_FLUSH
+    Z_NULL
+    Z_OK
+    Z_PARTIAL_FLUSH
+    Z_STREAM_END
+    Z_STREAM_ERROR
+    Z_SYNC_FLUSH
+    Z_UNKNOWN
+    Z_VERSION_ERROR
 );
 
 
-$VERSION = "1.02" ;
+$VERSION = "1.04" ;
 
 
 sub AUTOLOAD {
@@ -82,13 +82,13 @@ sub AUTOLOAD {
     ($constname = $AUTOLOAD) =~ s/.*:://;
     my $val = constant($constname, @_ ? $_[0] : 0);
     if ($! != 0) {
-	if ($! =~ /Invalid/) {
-	    $AutoLoader::AUTOLOAD = $AUTOLOAD;
-	    goto &AutoLoader::AUTOLOAD;
-	}
-	else {
-	    croak "Your vendor has not defined Compress::Zlib macro $constname"
-	}
+    if ($! =~ /Invalid/) {
+        $AutoLoader::AUTOLOAD = $AUTOLOAD;
+        goto &AutoLoader::AUTOLOAD;
+    }
+    else {
+        croak "Your vendor has not defined Compress::Zlib macro $constname"
+    }
     }
     eval "sub $AUTOLOAD { $val }";
     goto &$AUTOLOAD;
@@ -103,7 +103,7 @@ sub isaFilehandle
     my $fh = shift ;
 
     return ((UNIVERSAL::isa($fh,'GLOB') or UNIVERSAL::isa(\$fh,'GLOB')) 
-		and defined fileno($fh)  )
+        and defined fileno($fh)  )
 
 }
 
@@ -119,14 +119,14 @@ sub gzopen
     my ($file, $mode) = @_ ;
  
     if (isaFilehandle $file) {
-	IO::Handle::flush($file) ;
+    IO::Handle::flush($file) ;
         gzdopen_(fileno($file), $mode, tell($file)) 
     }
     elsif (isaFilename $file) {
-	gzopen_($file, $mode) 
+    gzopen_($file, $mode) 
     }
     else {
-	croak "gzopen: file parameter is not a filehandle or filename"
+    croak "gzopen: file parameter is not a filehandle or filename"
     }
 }
 
@@ -154,12 +154,12 @@ sub ParseParameters($@)
 
     while (($key, $value) = each %options)
     {
-	$key =~ s/^-// ;
+    $key =~ s/^-// ;
 
         if (exists $default->{$key})
           { $got{$key} = $value }
         else
-	  { push (@Bad, $key) }
+      { push (@Bad, $key) }
     }
     
     if (@Bad) {
@@ -171,34 +171,34 @@ sub ParseParameters($@)
 }
 
 $deflateDefault = {
-	'Level'	    =>	Z_DEFAULT_COMPRESSION(),
-	'Method'	    =>	Z_DEFLATED(),
-	'WindowBits' =>	MAX_WBITS(),
-	'MemLevel'   =>	MAX_MEM_LEVEL(),
-	'Strategy'   =>	Z_DEFAULT_STRATEGY(),
-	'Bufsize'    =>	4096,
-	'Dictionary' =>	"",
-	} ;
+    'Level'     =>  Z_DEFAULT_COMPRESSION(),
+    'Method'        =>  Z_DEFLATED(),
+    'WindowBits' => MAX_WBITS(),
+    'MemLevel'   => MAX_MEM_LEVEL(),
+    'Strategy'   => Z_DEFAULT_STRATEGY(),
+    'Bufsize'    => 4096,
+    'Dictionary' => "",
+    } ;
 
 $deflateParamsDefault = {
-	'Level'	    =>	Z_DEFAULT_COMPRESSION(),
-	'Strategy'   =>	Z_DEFAULT_STRATEGY(),
-	} ;
+    'Level'     =>  Z_DEFAULT_COMPRESSION(),
+    'Strategy'   => Z_DEFAULT_STRATEGY(),
+    } ;
 
 $inflateDefault = {
-	'WindowBits' =>	MAX_WBITS(),
-	'Bufsize'    =>	4096,
-	'Dictionary' =>	"",
-	} ;
+    'WindowBits' => MAX_WBITS(),
+    'Bufsize'    => 4096,
+    'Dictionary' => "",
+    } ;
 
 
 sub deflateInit
 {
     my ($got) = ParseParameters($deflateDefault, @_) ;
     _deflateInit($got->{Level}, $got->{Method}, $got->{WindowBits}, 
-		$got->{MemLevel}, $got->{Strategy}, $got->{Bufsize},
-		$got->{Dictionary}) ;
-		
+        $got->{MemLevel}, $got->{Strategy}, $got->{Bufsize},
+        $got->{Dictionary}) ;
+        
 }
 
 sub inflateInit
@@ -214,7 +214,7 @@ sub compress($)
 
     if (ref $_[0] ) {
         $in = $_[0] ;
-	croak "not a scalar reference" unless ref $in eq 'SCALAR' ;
+    croak "not a scalar reference" unless ref $in eq 'SCALAR' ;
     }
     else {
         $in = \$_[0] ;
@@ -242,7 +242,7 @@ sub uncompress($)
 
     if (ref $_[0] ) {
         $in = $_[0] ;
-	croak "not a scalar reference" unless ref $in eq 'SCALAR' ;
+    croak "not a scalar reference" unless ref $in eq 'SCALAR' ;
     }
     else {
         $in = \$_[0] ;
@@ -253,7 +253,7 @@ sub uncompress($)
         ($output, $err) = $x->inflate($in) ;
         return undef unless $err == Z_STREAM_END() ;
  
-	return $output ;
+    return $output ;
     }
  
     return undef ;
@@ -757,11 +757,11 @@ I<gzcat> function.
     use Compress::Zlib ;
 
     die "Usage: gzcat file...\n"
-	unless @ARGV ;
+    unless @ARGV ;
 
     foreach $file (@ARGV) {
         $gz = gzopen($file, "rb") 
-	    or die "Cannot open $file: $gzerrno\n" ;
+        or die "Cannot open $file: $gzerrno\n" ;
 
         print $buffer 
             while $gz->gzread($buffer) > 0 ;
@@ -805,11 +805,11 @@ output.
     binmode STDOUT; # gzopen only sets it on the fd
 
     my $gz = gzopen(\*STDOUT, "wb")
-	  or die "Cannot open stdout: $gzerrno\n" ;
+      or die "Cannot open stdout: $gzerrno\n" ;
 
     while (<>) {
         $gz->gzwrite($_) 
-	    or die "error writing: $gzerrno\n" ;
+        or die "error writing: $gzerrno\n" ;
     }
 
     $gz->gzclose ;
@@ -902,7 +902,7 @@ buffer. This bug was reported by Helmut Jarausch
 =item 5.
 
 Removed dependancy to zutil.h and so dropped support for 
-	
+    
     DEF_MEM_LEVEL (use MAX_MEM_LEVEL instead)
     DEF_WBITS     (use MAX_WBITS instead)
 
@@ -1005,5 +1005,24 @@ on an amiga. Thanks to Erik van Roode for reporting this one.
 =item 3.
 
 Patched zlib.t for OS/2. Thanks to Ilya Zakharevich for the patch.
+
+=back
+
+=head2 1.03 17 Mar 1999
+
+=over 5
+
+=item 1.
+
+Updated to use the new PL_ symbols. 
+Means the module can be built with Perl 5.005_5*
+
+=head2 1.04 27 May 1999
+
+=over 5
+
+=item 1.
+
+Bug 19990527.001: compress(undef) core dumps -- Fixed.
 
 =back
