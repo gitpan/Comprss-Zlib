@@ -1,9 +1,9 @@
 /* Filename: Zlib.xs
  * Author  : Paul Marquess, <Paul.Marquess@btinternet.com>
- * Created : 27th May 1999
- * Version : 1.04
+ * Created : 15th January 2001
+ * Version : 1.09
  *
- *   Copyright (c) 1995-1999 Paul Marquess. All rights reserved.
+ *   Copyright (c) 1995-2001 Paul Marquess. All rights reserved.
  *   This program is free software; you can redistribute it and/or
  *   modify it under the same terms as Perl itself.
  *
@@ -18,9 +18,18 @@
 
 
 
+#include <ConditionalMacros.h>
+#if PRAGMA_IMPORT
+#pragma import on
+#endif
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+
+#if PRAGMA_IMPORT
+#pragma import off
+#endif
 
 #include <zlib.h> 
 
@@ -57,6 +66,7 @@ typedef struct gzType {
     gzFile gz ;
     SV *   buffer ;
     int	   offset ;
+    bool   closed ;
 }  gzType ;
 
 typedef gzType* Compress__Zlib__gzFile ; 
@@ -89,8 +99,12 @@ static int trace = 0 ;
 SV *sv_NULL ;
 
 static void
+#ifdef CAN_PROTOTYPE
+SetGzErrorNo(int error_no)
+#else
 SetGzErrorNo(error_no)
 int error_no ;
+#endif
 {
     char * errstr ;
     SV * gzerror_sv = perl_get_sv(GZERRNO, FALSE) ;
@@ -112,8 +126,12 @@ int error_no ;
 }
 
 static void
+#ifdef CAN_PROTOTYPE
+SetGzError(gzFile file)
+#else
 SetGzError(file)
 gzFile file ;
+#endif
 {
     int error_no ;
 
@@ -122,8 +140,12 @@ gzFile file ;
 }
 
 static di_stream *
+#ifdef CAN_PROTOTYPE
+InitStream(int bufsize)
+#else
 InitStream(bufsize)
     int bufsize ;
+#endif
 {
     di_stream *s = (di_stream *)safemalloc(sizeof(di_stream));
 
@@ -146,9 +168,13 @@ InitStream(bufsize)
 #define SIZE 4096
 
 static int
+#ifdef CAN_PROTOTYPE
+gzreadline(Compress__Zlib__gzFile file, SV * output)
+#else
 gzreadline(file, output)
   Compress__Zlib__gzFile file ;
   SV * output ;
+#endif
 {
 
     SV * store = file->buffer ;
@@ -196,9 +222,13 @@ gzreadline(file, output)
 }
 
 static SV* 
+#ifdef CAN_PROTOTYPE
+deRef(SV * sv, char * string)
+#else
 deRef(sv, string)
 SV * sv ;
 char * string;
+#endif
 {
     if (SvROK(sv)) {
 	sv = SvRV(sv) ;
@@ -218,20 +248,14 @@ char * string;
     return sv ;
 }
 
-static int
-not_here(s)
-char *s;
-{
-    croak("%s not implemented on this architecture", s);
-    return -1;
-}
-
-
-
 static double
+#ifdef CAN_PROTOTYPE
+constant(char * name, int arg)
+#else
 constant(name, arg)
 char *name;
 int arg;
+#endif
 {
     errno = 0;
     switch (*name) {
@@ -527,6 +551,7 @@ gzopen_(path, mode)
     	    SvCUR_set(RETVAL->buffer, 0) ; 
 	    RETVAL->offset = 0 ;
 	    RETVAL->gz = gz ;
+	    RETVAL->closed = FALSE ;
 	}
 	else
 	    RETVAL = NULL ;
@@ -552,6 +577,7 @@ gzdopen_(fh, mode, offset)
             SvCUR_set(RETVAL->buffer, 0) ;
             RETVAL->offset = 0 ;
             RETVAL->gz = gz ;
+	    RETVAL->closed = FALSE ;
         }
         else
             RETVAL = NULL ;
@@ -635,12 +661,12 @@ gzreadline(file, buf)
             /* *SvEND(buf) = '\0'; */
         }
 
-#define Zip_gzwrite(file, buf) gzwrite(file->gz, buf, len)
+#define Zip_gzwrite(file, buf) gzwrite(file->gz, buf, (unsigned)len)
 int
 Zip_gzwrite(file, buf)
 	Compress::Zlib::gzFile	file
-	unsigned	len = SvCUR(ST(1)) ;
-	voidp 		buf = (voidp)SvPVX(ST(1)) ;
+	STRLEN		len = NO_INIT
+	voidp 		buf = (voidp)SvPV(ST(1), len) ;
 	CLEANUP:
 	  SetGzError(file->gz) ;
 
@@ -655,12 +681,15 @@ int
 Zip_gzclose(file)
 	Compress::Zlib::gzFile		file
 	CLEANUP:
+	  file->closed = TRUE ;
 	  SetGzErrorNo(RETVAL) ;
 
 void
 DESTROY(file)
 	Compress::Zlib::gzFile		file
 	CODE:
+	    if (! file->closed)
+	        Zip_gzclose(file) ;
 	    SvREFCNT_dec(file->buffer) ;
 	    safefree((char*)file) ;
 
@@ -817,8 +846,8 @@ deflate (s, buf)
     buf = deRef(buf, "deflate") ;
  
     /* initialise the input buffer */
-    s->stream.next_in = (Bytef*)SvPVX(buf) ;
-    s->stream.avail_in = SvCUR(buf) ;
+    s->stream.next_in = (Bytef*)SvPV(buf, *(STRLEN*)&s->stream.avail_in) ;
+    /* s->stream.avail_in = SvCUR(buf) ; */
 
     /* and the output buffer */
     /* output = sv_2mortal(newSVpv("", s->bufsize)) ; */
@@ -864,8 +893,9 @@ DESTROY(s)
 
 
 void
-flush(s)
+flush(s, f=Z_FINISH)
     Compress::Zlib::deflateStream	s
+    int	f
     int	outsize = NO_INIT
     SV * output = NO_INIT
     int err = Z_OK ;
@@ -889,7 +919,7 @@ flush(s)
 	    outsize += s->bufsize ;
             s->stream.avail_out = s->bufsize ;
         }
-        err = deflate(&(s->stream), Z_FINISH);
+        err = deflate(&(s->stream), f);
     
         /* deflate has finished flushing only when it hasn't used up
          * all the available space in the output buffer: 
@@ -938,6 +968,8 @@ inflate (s, buf)
     int		outsize = NO_INIT 
     SV * 	output = NO_INIT
     int		err = Z_OK ;
+  ALIAS:
+    __unc_inflate = 1
   PPCODE:
   
     /* If the buffer is a reference, dereference it */
@@ -948,7 +980,6 @@ inflate (s, buf)
     s->stream.avail_in = SvCUR(buf) ;
 	
     /* and the output buffer */
-    /* output = sv_2mortal(newSVpv("", s->bufsize+1)) ; */
     output = sv_2mortal(newSV(s->bufsize+1)) ;
     SvPOK_only(output) ;
     SvCUR_set(output, 0) ; 
@@ -956,18 +987,31 @@ inflate (s, buf)
     s->stream.next_out = (Bytef*) SvPVX(output)  ;
     s->stream.avail_out = outsize;
 
-    while (s->stream.avail_in != 0) { 
+    while (1) {
 
         if (s->stream.avail_out == 0) {
-            SvGROW(output, outsize + s->bufsize+1) ;
+            SvGROW(output, outsize + s->bufsize) ;
             s->stream.next_out = (Bytef*) SvPVX(output) + outsize ;
             outsize += s->bufsize ;
             s->stream.avail_out = s->bufsize ;
         }
+
         err = inflate(&(s->stream), Z_PARTIAL_FLUSH);
+	/* printf("err %d  avail_out %d avail_in %d\n", err, 
+		s->stream.avail_out, s->stream.avail_in) ; */
+	if (err == Z_BUF_ERROR) {
+	    if (s->stream.avail_out == 0)
+	        continue ;
+	    if (s->stream.avail_in == 0) {
+		err = Z_OK ;
+	        break ;
+	    }
+	}
+
 	if (err == Z_NEED_DICT && s->dictionary) {
 	    s->dict_adler = s->stream.adler ;
-            err = inflateSetDictionary(&(s->stream), (const Bytef*)SvPVX(s->dictionary),
+            err = inflateSetDictionary(&(s->stream), 
+	    				(const Bytef*)SvPVX(s->dictionary),
 					SvCUR(s->dictionary));
 	}
        
@@ -981,13 +1025,15 @@ inflate (s, buf)
         SvPOK_only(output);
         SvCUR_set(output, outsize - s->stream.avail_out) ;
         *SvEND(output) = '\0';
-	
-	/* fix the input buffer */
-	in = s->stream.avail_in ;
-	SvCUR_set(buf, in) ;
-	if (in)
-	    Move(s->stream.next_in, SvPVX(buf), in, char) ;	
-        *SvEND(buf) = '\0';
+    	
+ 	/* fix the input buffer */
+	if (ix == 0) {
+ 	    in = s->stream.avail_in ;
+ 	    SvCUR_set(buf, in) ;
+ 	    if (in)
+     	        Move(s->stream.next_in, SvPVX(buf), in, char) ;	
+            *SvEND(buf) = '\0';
+	}
     }
     else
         output = &PL_sv_undef ;

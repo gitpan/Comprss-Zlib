@@ -1,43 +1,52 @@
-Wednesday, June 2, 1999
+2001/02/09
 
-This is the Data::Dumper module with shared libraries compiled for 
-MacPerl.  Shared libraries run only on PPC and CFM68K versions, not 
-non-CFM 68K versions.
+This is the Compress-Zlib distribution with shared libraries compiled for MacPerl.  Shared libraries run only on PPC and CFM68K versions, not non-CFM 68K versions.
 
-This was compiled with MPW and Codewarrior.  Passed all tests.  
-I have no 68K machine so I can't test the CFM68K version.  Let me 
-know of any problems.
+The original of the changed files are in Mac_changed.sit.
 
-examples.t doesn't work (too many issues with shell redirection, etc.
-They could be fixed, but I don't feel like doing it.)  zlib.t passes
-all but four tests (58, 60, 68, 70), which show a problem with reading
-regular data and gzipped data from the same filehandle.  I know
-of no solution.  Maybe someone else does.  $fil->gzread in tests 58 and
-68 return 0 every time.
+This was compiled with Codewarrior IDE. Also requires zlib 1.1.3 and GUSI 1.8.5 to build the libraries.
 
-Best installed using cpan-mac, either with the CPAN shell,
-or the installme droplet.  From the CPAN shell, type:
+[zlib Mac port found here]
+http://www.cwi.nl/~jack/macsoftware.html
+[zlib home page]
+http://www.info-zip.org/pub/infozip/zlib/
 
-    cpan> install CNANDOR/Comprss-Zlib-1.04-bin-1-Mac.tgz
+[GUSI archive]
+ftp://gusi.sourceforge.net//pub/gusi/GUSeum/
+[GUSI home page]
+http://sourceforge.net/projects/gusi/
+
+
+examples.t
+It doesn't work on MacPerl(too many issues with shell redirection, etc.) 
+
+zlib.t
+Passed all tests on PPC.
+With the CFM68K version, passes all but seven tests (62, 66, 68, 72, 76, 77, 78). The critical test is 62 and 72 in which it fails to close files, and the following test will fail since they try to read those damaged files.  This can be summarized as a problem with reading/writing regular data and gzipped data from the same filehandle.
+There seems to be an incompatibility between Zlib and MacPerl of using fwrite function. Hope this will lead somebody to solve the problem. (I also hope that this is not misleading.)
+
+
+Best installed using cpan-mac, either with the CPAN shell, or the installme droplet.  From the CPAN shell, type:
+
+    cpan> install K/KI/KIMURA/Comprss-Zlib-1.09-bin-1-Mac.tgz
 
 Also, see the MMP page:
 
     http://pudge.net/mmp/
 
 --
-Chris Nandor          mailto:pudge@pobox.com         http://pudge.net/
-%PGPKey = ('B76E72AD', [1024, '0824090B CE73CA10  1FF77F13 8180B6B6'])
+KIMURA Takeshi
+mailto:kimura@cpan.org
 
 #===================================
 
-
                                  Compress::Zlib
 
-                                  Version 1.04
+                                  Version 1.09
 
-                                  27th May 1999
+                                 15th January 2001 
 
-             Copyright (c) 1995-1999 Paul Marquess. All rights reserved.
+             Copyright (c) 1995-2001 Paul Marquess. All rights reserved.
          This program is free software; you can redistribute it and/or
                 modify it under the same terms as Perl itself.
 
@@ -50,34 +59,44 @@ This module provides a Perl interface to part of the info-zip zlib
 compression library.  For more details see the pod documentation
 embedded in the file Zlib.pm.
 
+If you have downloaded this module in the expectation of manipulating the
+contents of .zip files, you will need to fetch and build the Archive::Zip
+module below as well.
+
+    http://www.cpan.org/modules/by-module/Archive/Archive-Zip-*.tar.gz
+
+
 PREREQUISITES
 -------------
 
 Before you can build Compress::Zlib you need to have the following
-thing installed on your system:
+installed on your system:
 
     * Perl 5.004 or better. 
-    * Info-zip zlib 1.0.2, 1.0.3 or 1.0.4 (note that this module is NOT
-      compatable with versions of zlib <= 1.0.1).
+    * Info-zip zlib 1.0.2 or better (note that this module is NOT
+      compatible with versions of zlib <= 1.0.1).
 
       The zlib compression library is available at
-      ftp://ftp.uu.net/pub/archiving/zip/zlib* and
-      ftp://swrinde.nde.swri.edu/pub/png/src/zlib*.
-      The zlib home page is http://www.cdrom.com/pub/infozip/zlib/
+      http://www.info-zip.org/pub/infozip/zlib/
 
+
+When building Compress::Zlib, you can optionally build the zlib
+library at the same time. If you are running Windows 95/98/NT, this
+seems to be the most straightforward option.
+
+If you want Compress::Zlib to build zlib, fetch a copy of the zlib
+distribution from the site mentioned above and unpack it into the
+Compress::Zlib source directory. If you have fetched zlib 1.1.3, it will
+create a directory called zlib-1.1.3.
+
+Now, whether you are building zlib or not, edit the file config.in
+and follow the instructions given in it.
 
 BUILDING THE MODULE
 -------------------
 
-Assuming you have met all the prerequisites, building the module should
-be relatively straightforward.
-
-The only things you might have to change for building the module are
-the names of the directories where the zlib library, libz, is installed
-and the directory where zlib.h and zconf.h are stored. Edit Makefile.PL
-and change ZLIB_LIB and ZLIB_INCLUDE if necessary.
-
-The module can now be built using this sequence of commands:
+Assuming you have met all the prerequisites, the module can now be built
+using this sequence of commands:
 
     perl Makefile.PL
     make
@@ -86,25 +105,48 @@ The module can now be built using this sequence of commands:
 INSTALLATION
 ------------
 
+To install Compress::Zlib, run the command below:
+
     make install
+
+TROUBLESHOOTING
+---------------
+
+HP-UX
+-----
+
+I've had a report that when building Compress::Zlib under HP-UX that it is
+necessary to have first built the zlib library with the -fpic option.
 
 FEEDBACK
 --------
 
-I have tested Compress::Zlib on both SunOS 4.1.3 (Sun C compiler) and
-Solaris 2.3 (Sun C compiler again). If you are building the module on
-another architecture I would appreciate a note to tell me how you got
-on. Although I am particularly interested to hear about any problems
-you encounter when building the system, I would still like to hear from
-you even if you don't.
+How to report a problem with Compress::Zlib.
 
-Things I particularly would like to know
+To help me help you, I need of the following information:
 
-   * The Operating system name and version, e.g. SunOS 4.1.3
-   * Architecture, e.g. Solaris
-   * C compiler, e.g. gcc
-   * Where there any warnings/errors printed by the C compiler? If so
-     please send the exact output if possible.
+ 1. The version of Perl and the operating system name and version you
+    are running. The full output from running "perl -V" will tell me all
+    I need to know. If your perl doesn't understand the -V flag, then it's
+    too old to build this module -- you need to have Perl 5.004 or better.
+
+ 2. The version of Compress::Zlib you have. 
+    If you have successfully installed Compress::Zlib, this one-liner
+    will tell you:
+
+       perl -e 'use Compress::Zlib; print "ver $Compress::Zlib::VERSION\n"'
+
+    If you haven't installed Compress::Zlib then search Compress::Zlib.pm
+    for a line like this:
+
+      $VERSION = "1.05" ;
+
+ 3. The version of zlib you have installed.
+    If you don't know look at the beginning of the file zlib.h. 
+
+ 4. If you are having problems building Compress::Zlib, send me a
+    complete log of what happened.
+
 
 CHANGES
 -------
@@ -119,7 +161,7 @@ CHANGES
 	Fixed bug in gzreadline - previously it would keep returning
 	the same buffer. This bug was reported by Helmut Jarausch
 
-	Removed dependancy to zutil.h and so dropped support for 
+	Removed dependency to zutil.h and so dropped support for 
 	
 	    DEF_MEM_LEVEL (use MAX_MEM_LEVEL instead)
 	    DEF_WBITS     (use MAX_WBITS instead)
@@ -198,5 +240,61 @@ CHANGES
   1.04 - 27 May 1999
 
       * Bug 19990527.001: compress(undef) core dumps -- Fixed.	
+
+  1.05 - 3 June 1999
+
+      * Previous release used newSVpvn, which doesn't exist in 5.004_04
+        or earlier. Changed to use newSVpv instead.
+
+      * The module needs Perl 5.004 or better, so updated the version
+        checking in Zlib.pm and Makefile.PL
+
+  1.06 - 20 Sep 1999
+
+      * Fixed a nasty problem where inflate could truncate the data
+        returned. Thanks to Douglas Thomson <dougt@mugc.cc.monash.edu.au>
+        for both spotting the problem and fixing the bug.
+
+      * Added a note about the undocumented features in zlib that are
+        required when accessing zip files.
+
+      * gzclose will now get called automatically when the gzip object is
+        destroyed.
+
+  1.07 - 27 Nov 1999
+
+      * ANSI-ified the static functions in Zlib.xs
+
+      * Added the ability to build zlib along with the module.
+        This feature is 90% based on a Makefile provided by Gurusamy
+        Sarathy.
+
+  1.08 - 6 Jan 2000
+
+      * uncompress was clobbering its input parameter. Now it doesn't.
+        This bug was spotted by Deven T. Corzine.
+ 
+      * If a variable that only ever contained a number was given
+        to compress or deflate, it would not be compressed properly. Now
+        it will be coerced to a string and then compressed. This bug
+        was spotted by Deven T. Corzine.
+
+  1.09 - 15th January 2001
+
+      * Silenced a few compiler warnings.
+
+      * Updated zlib home site in README & Zlib.pm to www.info-zip.org
+
+      * Minor typo in Zlib.pm - a link used AUTHORS instead of AUTHOR
+        -- spotted by Frank Martini.
+
+      * Mention Archive::Zip
+
+      * added memGunzip. This is largely based on code provided by Jim Leonard.
+
+      * $deflate->flush can now take an optional parameter. Valid
+        values are Z_NO_FLUSH, Z_PARTIAL_FLUSH, Z_SYNC_FLUSH, Z_FULL_FLUSH
+        and Z_FINISH. The default is Z_FINISH.
+
 
 Paul Marquess <Paul.Marquess@btinternet.com>

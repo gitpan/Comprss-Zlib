@@ -1,9 +1,11 @@
 ANNOUNCE
 MANIFEST
+Makefile.NT
 Makefile.PL
 README
 Zlib.pm
 Zlib.xs
+config.in
 examples/filtdef
 examples/filtinf
 examples/gzcat
