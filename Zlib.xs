@@ -1,7 +1,7 @@
 /* Filename: Zlib.xs
  * Author  : Paul Marquess, <Paul.Marquess@btinternet.com>
- * Created : 15th January 2001
- * Version : 1.09
+ * Created : 28th April 2001
+ * Version : 1.12
  *
  *   Copyright (c) 1995-2001 Paul Marquess. All rights reserved.
  *   This program is free software; you can redistribute it and/or
@@ -519,7 +519,7 @@ BOOT:
         sv_setpv(gzerror_sv, "") ;
         SvIOK_on(gzerror_sv) ;
     }
-    sv_NULL = (SV*)newSVpv("", 0);
+    sv_NULL = newSVpv("", 0);
 
 
 #define Zip_zlib_version()	(char*)zlib_version

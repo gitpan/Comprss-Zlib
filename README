@@ -1,10 +1,13 @@
-2001/02/09
+2001/05/05
 
-This is the Compress-Zlib distribution with shared libraries compiled for MacPerl.  Shared libraries run only on PPC and CFM68K versions, not non-CFM 68K versions.
+This is the Compress-Zlib distribution with shared libraries
+compiled for MacPerl.  Shared libraries run only on PPC and CFM68K
+versions, not non-CFM 68K versions.
 
 The original of the changed files are in Mac_changed.sit.
 
-This was compiled with Codewarrior IDE. Also requires zlib 1.1.3 and GUSI 1.8.5 to build the libraries.
+This was compiled with Codewarrior IDE. Also requires zlib 1.1.3
+and GUSI 1.8.5 to build the libraries.
 
 [zlib Mac port found here]
 http://www.cwi.nl/~jack/macsoftware.html
@@ -18,17 +21,38 @@ http://sourceforge.net/projects/gusi/
 
 
 examples.t
-It doesn't work on MacPerl(too many issues with shell redirection, etc.) 
+It doesn't work on MacPerl (too many issues with shell redirection,
+etc.) 
 
 zlib.t
 Passed all tests on PPC.
-With the CFM68K version, passes all but seven tests (62, 66, 68, 72, 76, 77, 78). The critical test is 62 and 72 in which it fails to close files, and the following test will fail since they try to read those damaged files.  This can be summarized as a problem with reading/writing regular data and gzipped data from the same filehandle.
-There seems to be an incompatibility between Zlib and MacPerl of using fwrite function. Hope this will lead somebody to solve the problem. (I also hope that this is not misleading.)
+With the CFM68K version, passes all but seven tests (62, 66, 68,
+72, 76, 77, 78). The critical test is 62 and 72 in which it fails
+to close files, and the following test will fail since they try to
+read those damaged files.  This can be summarized as a problem
+with reading/writing regular data and gzipped data from the same
+filehandle.
+
+Bob Dalgleish <Robert.Dalgleish@sk.sympatico.ca> sent me a mail on
+this problem;
+>It is funny that you are having problems in the MacPerl side with
+>Compress::Zlib that are identical to those on the Unix side.  I have
+>documented the problems at this web page:
+>
+>http://duke.usask.ca/~dalglb/macosx/
+>
+>I firmly believe that mixing high- and low-level I/O calls on the same
+>stream is BAD NEWS, so I am surprised that it is essential for
+>Compress::Zlib.
 
 
-Best installed using cpan-mac, either with the CPAN shell, or the installme droplet.  From the CPAN shell, type:
+Best installed using cpan-mac, either with the CPAN shell, or the
+installme droplet.  From the CPAN shell, type:
 
-    cpan> install K/KI/KIMURA/Comprss-Zlib-1.09-bin-1-Mac.tgz
+    cpan> install K/KI/KIMURA/Comprss-Zlib-1.12-bin-1-Mac.tgz
+
+If you are not using the above tools, don't forget to run Makefile.PL.
+This will create the appropriate module file and test files.
 
 Also, see the MMP page:
 
@@ -39,12 +63,11 @@ KIMURA Takeshi
 mailto:kimura@cpan.org
 
 #===================================
-
                                  Compress::Zlib
 
-                                  Version 1.09
+                                  Version 1.12
 
-                                 15th January 2001 
+                                 28th April 2001 
 
              Copyright (c) 1995-2001 Paul Marquess. All rights reserved.
          This program is free software; you can redistribute it and/or
@@ -95,12 +118,20 @@ and follow the instructions given in it.
 BUILDING THE MODULE
 -------------------
 
+Assuming you have met all the prerequisites, building the module should
+be relatively straightforward.  
+
 Assuming you have met all the prerequisites, the module can now be built
 using this sequence of commands:
 
-    perl Makefile.PL
-    make
-    make test
+Step 1 :  Edit the file config.in to suit you local installation.
+          Instructions are given in the file. 
+
+Step 2 :  Build and test the module using this sequence of commands:
+
+              perl Makefile.PL
+              make
+              make test
 
 INSTALLATION
 ------------
@@ -296,5 +327,21 @@ CHANGES
         values are Z_NO_FLUSH, Z_PARTIAL_FLUSH, Z_SYNC_FLUSH, Z_FULL_FLUSH
         and Z_FINISH. The default is Z_FINISH.
 
+  1.10 - 5th February 2001
+
+      * fixed a bug in memGunzip. Used Z_ERR instead of Z_DATA_ERROR.
+
+  1.11 - 17th February 2001
+
+      * Added logic in Makefile.PL to toggle between using $^W and
+        the warnings pragma in the module.
+
+      * The module, the examples & the test harness are now all strict
+        & warnings clean.
+
+  1.12 - 28th April 2001
+
+      * Modified Makefile.PL to only enable the warnings pragma if
+        using perl 5.6.1 or better.
 
 Paul Marquess <Paul.Marquess@btinternet.com>

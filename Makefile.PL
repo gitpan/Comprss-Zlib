@@ -11,6 +11,13 @@ my $BUILD_ZLIB = 0 ;
 
 ParseCONFIG() ;
 
+my @files = ('Zlib.pm', glob(":t:*.t"), grep(!/\.bak$/,  glob(":examples:*"))) ;
+# warnings pragma is stable from 5.6.1 onward
+if ($] < 5.006001)
+ { oldWarnings(@files) }
+else
+ { newWarnings(@files) }    
+
 WriteMakefile(	
 	NAME   	 	=> 'Compress::Zlib',
 	VERSION_FROM  	=> 'Zlib.pm',
@@ -128,6 +135,53 @@ EOM
 
     print "Looks Good.\n" ;
 
+}
+
+sub oldWarnings
+{
+    local ($^I) = ".bak" ;
+    local (@ARGV) = @_ ;
+
+    while (<>)
+    {
+	if (/^__END__/)
+	{
+	    print ;
+	    my $this = $ARGV ;
+    	    while (<>)
+	    {
+		last if $ARGV ne $this ;
+		print ;
+	    }
+	}
+
+	s/^(\s*)(no\s+warnings)/${1}local (\$^W) = 0; #$2/ ;
+	s/^(\s*)(use\s+warnings)/${1}local (\$^W) = 1; #$2/ ;
+	print ;
+    }
+}
+
+sub newWarnings
+{
+    local ($^I) = ".bak" ;
+    local (@ARGV) = @_ ;
+
+    while (<>)
+    {
+	if (/^__END__/)
+	{
+	    my $this = $ARGV ;
+	    print ;
+    	    while (<>)
+	    {
+		last if $ARGV ne $this ;
+		print ;
+	    }
+	}
+
+	s/^(\s*)local\s*\(\$\^W\)\s*=\s*\d+\s*;\s*#\s*((no|use)\s+warnings.*)/$1$2/ ;
+	print ;
+    }
 }
 
 # end of file Makefile.PL
